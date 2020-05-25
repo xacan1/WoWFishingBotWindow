@@ -213,7 +213,7 @@ class Bot:
                 for pt in zip(*loc[::-1]):
                     cv2.rectangle(img_screen_original, pt, (pt[0]+wt, pt[1]+ht), (0,0,255), 2)
                 cv2.imshow('Найдено', img_screen_original)
-                raise ZeroDivisionError
+                cv2.waitKey(0)
                     
             if any(loc[0]):
                 #if self.debug_mode:
