@@ -10,19 +10,28 @@ from multiprocessing import Process, Queue, freeze_support
 
 #iterations = 100 количество циклов рыбалки (забросов)
 #threshold = 0.65 65% соответствие нашему шаблону для поиска
-#limit_of_diff = 25 критерий поклевки (коэффициент разности скринов при дергании шаблона)
+#limit_of_diff = 10-20 критерий поклевки (коэффициент разности скринов при дергании шаблона)
 #screen_area = {'x1': 0, 'y1': 0, 'x2':1600, 'y2':500} область для поиска поплавка
 #start_button_x, start_button_y координаты кнопки на экране для запуска рыбалки
 
 class WindowBot:
     def __init__(self, master, queue, debug_mode):
+        self.name_program = 'WoW Fishing Bot'
         self.master = master
         self.queue = queue
         self.debug_mode = debug_mode
         self.process_bot = None
         self.master.geometry('720x400')
-        self.master.title('WoW Fishing Bot')
+        self.master.title(self.name_program)
         self.master.protocol('WM_DELETE_WINDOW', self.Exit)
+
+        main_menu = Menu(self.master)
+        self.master.config(menu=main_menu)
+        help_menu = Menu(main_menu, tearoff=0)
+        help_menu.add_command(label='Справка по боту', command=self.GetHelp)
+        help_menu.add_command(label='О программе', command=self.GetInfoAboutBot)
+        main_menu.add_cascade(label='Справка', menu=help_menu)
+        
         self.frame_top = Frame(self.master)
         self.frame_top.pack(side=TOP, fill=X, expand=NO)
         self.frame_label_entry = LabelFrame(self.frame_top, bd=3, text='Параметры:')
@@ -38,10 +47,10 @@ class WindowBot:
         
         self.label_iterations = Label(self.frame_label, text='Количество забросов:')
         self.label_iterations.pack(side=TOP)
-        self.label_threshold = Label(self.frame_label, text='Коэффициент соответствия шаблонам:')
+        self.label_threshold = Label(self.frame_label, text='Коэффициент соответствия шаблонам (0-1):')
         self.label_threshold.pack(side=TOP)
-        self.label_limit_of_diff = Label(self.frame_label, text='Коэффициент влияющий на реакцию бота при дергании поплавка:')
-        self.label_limit_of_diff.pack(side=TOP)
+        #self.label_limit_of_diff = Label(self.frame_label, text='Коэффициент влияющий на реакцию бота при дергании поплавка(устарело):')
+        #self.label_limit_of_diff.pack(side=TOP)
         self.label_start_button_x = Label(self.frame_label, text='Координата X кнопки рыбалки:')
         self.label_start_button_x.pack(side=TOP)
         self.label_start_button_y = Label(self.frame_label, text='Координата Y кнопки рыбалки:')
@@ -49,7 +58,7 @@ class WindowBot:
 
         self.iterations = StringVar()
         self.threshold = StringVar()
-        self.limit_of_diff = StringVar()
+        #self.limit_of_diff = StringVar()
         self.start_button_x = StringVar()
         self.start_button_y = StringVar()
         
@@ -57,15 +66,15 @@ class WindowBot:
         self.entry_iterations.pack(side=TOP)
         self.entry_threshold = Entry(self.frame_entry, bd=2, textvariable=self.threshold)
         self.entry_threshold.pack(side=TOP)
-        self.entry_limit_of_diff = Entry(self.frame_entry, bd=2, textvariable=self.limit_of_diff)
-        self.entry_limit_of_diff.pack(side=TOP)
+        #self.entry_limit_of_diff = Entry(self.frame_entry, bd=2, textvariable=self.limit_of_diff)
+        #self.entry_limit_of_diff.pack(side=TOP)
         self.entry_start_button_x = Entry(self.frame_entry, bd=2, textvariable=self.start_button_x)
         self.entry_start_button_x.pack(side=TOP)
         self.entry_start_button_y = Entry(self.frame_entry, bd=2, textvariable=self.start_button_y)
         self.entry_start_button_y.pack(side=TOP)
 
         self.start_button = Button(self.frame_button, bd=2, text='Start', font='arial 16', command=self.Start)
-        self.start_button.pack(side=TOP)
+        self.start_button.pack(side=TOP, pady=10)
         self.stop_button = Button(self.frame_button, bd=2, text='Stop', font='arial 16', command=self.Stop)
         self.stop_button.pack(side=TOP)
 
@@ -81,11 +90,17 @@ class WindowBot:
         if self.parameters:
             self.entry_iterations.insert(1, int(self.parameters['iterations']))
             self.entry_threshold.insert(1, self.parameters['threshold'])
-            self.entry_limit_of_diff.insert(1, self.parameters['limit_of_diff'])
+            #self.entry_limit_of_diff.insert(1, self.parameters['limit_of_diff'])
             self.entry_start_button_x.insert(1, int(self.parameters['start_button_x']))
             self.entry_start_button_y.insert(1, int(self.parameters['start_button_y']))
         
         self.master.mainloop()
+
+    def GetInfoAboutBot(self):
+        messagebox.showinfo(self.name_program, '"' + self.name_program + '"' + ' powered by Hassan Smirnov(с) 2020')
+
+    def GetHelp(self):
+        messagebox.showinfo(self.name_program, 'Скоро напишу короткую справку по работе бота, хотя и так все понятно =)')
 
     def GetAreaForScreenshot(self):
         screen_width = self.master.winfo_screenwidth()
@@ -119,7 +134,7 @@ class WindowBot:
         parameters = {}
         parameters['iterations'] = self.iterations.get()
         parameters['threshold'] = self.threshold.get()
-        parameters['limit_of_diff'] = self.limit_of_diff.get()
+        #parameters['limit_of_diff'] = self.limit_of_diff.get()
         parameters['start_button_x'] = self.start_button_x.get()
         parameters['start_button_y'] = self.start_button_y.get()
         
@@ -158,14 +173,13 @@ class WindowBot:
     
     def Stop(self):
         if self.process_bot:
-            self.text_info.insert(END, 'Бот остановлен!')
+            self.text_info.insert(END, 'Бот остановлен!\n')
             self.process_bot.terminate()
             self.process_bot.join()
             self.process_bot.close()
             self.process_bot = None
         else:
-            
-            self.text_info.insert(END, 'Бот остановлен!')
+            self.text_info.insert(END, 'Бот остановлен!\n')
         self.start_button.configure(state=NORMAL)
 
     def Exit(self):
@@ -227,16 +241,17 @@ class Bot:
     def StartBot(self):
         current_time = time.strftime("%d.%m.%Y %H:%M:%S", time.localtime())
         self.queue.put((END, 'Начали процесс: ' + current_time + '\n'))
-        #self.queue.put((END, 'ТЕСТ\n'))
         templates = self.GetTemplates()
-        average = []
+        
+        diff_list = [] #Список средних разностей величин от точек скриншота
+        mean_diff = 0 # средняя разность величин поиска поплавка
         time.sleep(2)
         
         for iteration in range(self.parameters['iterations']):
             self.queue.put((END, 'Заброс удочки № ' + str(iteration) + '\n')) #сообщение для окна бота в виде кортежа (координаты, текст)
-            #self.Logging(self.queue.qsize())
-            average.clear()
-            average.append(0)
+            if self.debug_mode:
+                self.Logging(self.queue.qsize())
+            previous_average_mean = 0 # средняя величина от массива точек скриншота
             pyautogui.moveTo(self.parameters['start_button_x'], self.parameters['start_button_y']) #тут координаты нашей кнопки с забрасыванием удочки
             pyautogui.click(button='left')
             time.sleep(2)
@@ -249,16 +264,19 @@ class Bot:
                 width, height, wt, ht = result
                 clean_screen = ImageGrab.grab(bbox=(width, height, width+wt, height+ht))
                 mean = np.mean(clean_screen)
-                diff = abs(average[-1] - mean) # поплавок найден
-                self.queue.put((END, str(diff)+'\n'))
-                
-                if not self.debug_mode and len(average) > 1 and diff > self.parameters['limit_of_diff']:
+                diff = abs(previous_average_mean - mean) # тут уже поплавок найден
+                diff_list.append(diff)
+                mean_diff = np.mean(diff_list)
+                self.queue.put((END, 'diff: {} - mean_diff: {}\n'.format(str(diff), str(mean_diff))))
+            
+                if not self.debug_mode and previous_average_mean > 0 and diff > mean_diff:
                     self.queue.put((END, 'КЛЮЕТ!\n'))
                     pyautogui.moveTo(width+wt/2, height+ht/2)
                     pyautogui.click(button='left')
                     time.sleep(1)
                     break
-                average.append(mean)
+                
+                previous_average_mean = mean
 
 class ProcessBot(Process):
     def __init__(self, queue, parameters, debug_mode):
