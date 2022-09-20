@@ -1,4 +1,3 @@
-# import glob
 import time
 import pyautogui
 from pathlib import Path
@@ -8,6 +7,7 @@ import cv2
 from tkinter import *
 from tkinter import messagebox
 from multiprocessing import Process, Queue, freeze_support
+import config
 
 
 # iterations = 100 количество циклов рыбалки (забросов)
@@ -31,12 +31,14 @@ class WindowBot:
         self.master.config(menu=main_menu)
         help_menu = Menu(main_menu, tearoff=0)
         help_menu.add_command(label='Справка по боту', command=self.GetHelp)
-        help_menu.add_command(label='О программе', command=self.GetInfoAboutBot)
+        help_menu.add_command(label='О программе',
+                              command=self.GetInfoAboutBot)
         main_menu.add_cascade(label='Справка', menu=help_menu)
 
         self.frame_top = Frame(self.master)
         self.frame_top.pack(side=TOP, fill=X, expand=NO)
-        self.frame_label_entry = LabelFrame(self.frame_top, bd=3, text='Параметры:')
+        self.frame_label_entry = LabelFrame(
+            self.frame_top, bd=3, text='Параметры:')
         self.frame_label_entry.pack(side=LEFT, fill=X, expand=NO)
         self.frame_label = Frame(self.frame_label_entry)
         self.frame_label.pack(side=LEFT, expand=NO)
@@ -44,16 +46,21 @@ class WindowBot:
         self.frame_entry.pack(side=LEFT, expand=NO)
         self.frame_button = Frame(self.frame_top)
         self.frame_button.pack(side=LEFT, expand=NO)
-        self.frame_info = LabelFrame(self.master, bd=3, text='Текущее состояние')
+        self.frame_info = LabelFrame(
+            self.master, bd=3, text='Текущее состояние')
         self.frame_info.pack(side=BOTTOM, fill=BOTH, expand=YES)
 
-        self.label_iterations = Label(self.frame_label, text='Количество забросов:')
+        self.label_iterations = Label(
+            self.frame_label, text='Количество забросов:')
         self.label_iterations.pack(side=TOP)
-        self.label_threshold = Label(self.frame_label, text='Коэффициент соответствия шаблонам (0-1):')
+        self.label_threshold = Label(
+            self.frame_label, text='Коэффициент соответствия шаблонам (0-1):')
         self.label_threshold.pack(side=TOP)
-        self.label_start_button_x = Label(self.frame_label, text='Координата X кнопки рыбалки:')
+        self.label_start_button_x = Label(
+            self.frame_label, text='Координата X кнопки рыбалки:')
         self.label_start_button_x.pack(side=TOP)
-        self.label_start_button_y = Label(self.frame_label, text='Координата Y кнопки рыбалки:')
+        self.label_start_button_y = Label(
+            self.frame_label, text='Координата Y кнопки рыбалки:')
         self.label_start_button_y.pack(side=TOP)
 
         self.iterations = StringVar()
@@ -61,24 +68,31 @@ class WindowBot:
         self.start_button_x = StringVar()
         self.start_button_y = StringVar()
 
-        self.entry_iterations = Entry(self.frame_entry, bd=2, textvariable=self.iterations)
+        self.entry_iterations = Entry(
+            self.frame_entry, bd=2, textvariable=self.iterations)
         self.entry_iterations.pack(side=TOP)
-        self.entry_threshold = Entry(self.frame_entry, bd=2, textvariable=self.threshold)
+        self.entry_threshold = Entry(
+            self.frame_entry, bd=2, textvariable=self.threshold)
         self.entry_threshold.pack(side=TOP)
-        self.entry_start_button_x = Entry(self.frame_entry, bd=2, textvariable=self.start_button_x)
+        self.entry_start_button_x = Entry(
+            self.frame_entry, bd=2, textvariable=self.start_button_x)
         self.entry_start_button_x.pack(side=TOP)
-        self.entry_start_button_y = Entry(self.frame_entry, bd=2, textvariable=self.start_button_y)
+        self.entry_start_button_y = Entry(
+            self.frame_entry, bd=2, textvariable=self.start_button_y)
         self.entry_start_button_y.pack(side=TOP)
 
-        self.start_button = Button(self.frame_button, bd=2, text='Start', font='arial 16', command=self.Start)
+        self.start_button = Button(
+            self.frame_button, bd=2, text='Start', font='arial 16', command=self.Start)
         self.start_button.pack(side=TOP, pady=10)
-        self.stop_button = Button(self.frame_button, bd=2, text='Stop', font='arial 16', command=self.Stop)
+        self.stop_button = Button(
+            self.frame_button, bd=2, text='Stop', font='arial 16', command=self.Stop)
         self.stop_button.pack(side=TOP)
 
         self.text_info = Text(self.frame_info, wrap=WORD)
         self.text_info.pack(side=TOP, fill=BOTH, expand=YES)
 
-        self.scroll_text_info = Scrollbar(self.text_info, command=self.text_info.yview)
+        self.scroll_text_info = Scrollbar(
+            self.text_info, command=self.text_info.yview)
         self.scroll_text_info.pack(side=RIGHT, fill=Y)
         self.text_info.config(yscrollcommand=self.scroll_text_info.set)
 
@@ -87,13 +101,16 @@ class WindowBot:
         if self.parameters:
             self.entry_iterations.insert(1, int(self.parameters['iterations']))
             self.entry_threshold.insert(1, self.parameters['threshold'])
-            self.entry_start_button_x.insert(1, int(self.parameters['start_button_x']))
-            self.entry_start_button_y.insert(1, int(self.parameters['start_button_y']))
+            self.entry_start_button_x.insert(
+                1, int(self.parameters['start_button_x']))
+            self.entry_start_button_y.insert(
+                1, int(self.parameters['start_button_y']))
 
         self.master.mainloop()
 
     def GetInfoAboutBot(self):
-        messagebox.showinfo(self.name_program, '"' + self.name_program + '"' + ' powered by Hassan Smirnov(с) 2020')
+        messagebox.showinfo(self.name_program, '"' + self.name_program +
+                            '"' + ' powered by Hasan Smirnov(с) 2022')
 
     def GetHelp(self):
         messagebox.showinfo(self.name_program,
@@ -108,7 +125,7 @@ class WindowBot:
 
     def GetParameters(self):
         parameters = {}
-        fparams = open("ParametersBot.txt", 'r')
+        fparams = open(config.FILE_PARAMETERS, 'r')
         parameters['screen_area'] = self.GetAreaForScreenshot()
         for fline in fparams:
             if fline[0] == '#':
@@ -165,7 +182,8 @@ class WindowBot:
             return
         self.text_info.delete('0.0', END)
         self.start_button.configure(state=DISABLED)
-        self.process_bot = ProcessBot(self.queue, self.parameters, self.debug_mode)
+        self.process_bot = ProcessBot(
+            self.queue, self.parameters, self.debug_mode)
         self.process_bot.start()
         self.GetInfoFromBot()
 
@@ -200,7 +218,8 @@ class Bot:
         f.close()
 
     def GetTemplates(self):
-        templates = {}  # сами шаблоны и их размеры в пикселях в формате:{'file_name':(img_template, (width, height))}
+        # сами шаблоны и их размеры в пикселях в формате:{'file_name':(img_template, (width, height))}
+        templates = {}
         # files = glob.glob('Templates\\*.png')
         files = Path.cwd().glob('Templates\\*.png')
 
@@ -210,22 +229,28 @@ class Bot:
         return templates
 
     def FindTemplates(self, templates):
-        result = (0, 0, 0, 0)  # x,y найденного верхнего угла шаблона + ширина и высота самого шаблона
+        # x,y найденного верхнего угла шаблона + ширина и высота самого шаблона
+        result = (0, 0, 0, 0)
         screen_area = self.parameters['screen_area']
         base_screen_file = 'screenshot.png'
-        base_screen = ImageGrab.grab(bbox=(screen_area['x1'], screen_area['y1'], screen_area['x2'], screen_area['y2']))
+        base_screen = ImageGrab.grab(bbox=(
+            screen_area['x1'], screen_area['y1'], screen_area['x2'], screen_area['y2']))
         base_screen.save(base_screen_file)
         for key in templates:
             img_template = templates[key][0]
             wt, ht = templates[key][1]
             img_screen_original = cv2.imread(base_screen_file)
-            img_screen_gray = cv2.cvtColor(img_screen_original, cv2.COLOR_BGR2GRAY)
-            res = cv2.matchTemplate(img_screen_gray, img_template, cv2.TM_CCOEFF_NORMED)
-            loc = np.where(res > self.parameters['threshold'])  # массив областей-кандидатов в поплавки
+            img_screen_gray = cv2.cvtColor(
+                img_screen_original, cv2.COLOR_BGR2GRAY)
+            res = cv2.matchTemplate(
+                img_screen_gray, img_template, cv2.TM_CCOEFF_NORMED)
+            # массив областей-кандидатов в поплавки
+            loc = np.where(res > self.parameters['threshold'])
 
             if self.debug_mode:
                 for pt in zip(*loc[::-1]):
-                    cv2.rectangle(img_screen_original, pt, (pt[0] + wt, pt[1] + ht), (0, 0, 255), 2)
+                    cv2.rectangle(img_screen_original, pt,
+                                  (pt[0] + wt, pt[1] + ht), (0, 0, 255), 2)
                 cv2.imshow('Найдено', img_screen_original)
                 cv2.waitKey(0)
 
@@ -266,12 +291,15 @@ class Bot:
                 if not any(result):
                     continue
                 width, height, wt, ht = result
-                clean_screen = ImageGrab.grab(bbox=(width, height, width + wt, height + ht))
+                clean_screen = ImageGrab.grab(
+                    bbox=(width, height, width + wt, height + ht))
                 mean = np.mean(clean_screen)
-                diff = abs(previous_average_mean - mean)  # тут уже поплавок найден
+                # тут уже поплавок найден
+                diff = abs(previous_average_mean - mean)
                 diff_list.append(diff)
                 mean_diff = np.mean(diff_list)
-                self.queue.put((END, 'diff: {} - mean_diff: {}\n'.format(str(diff), str(mean_diff))))
+                self.queue.put(
+                    (END, 'diff: {} - mean_diff: {}\n'.format(str(diff), str(mean_diff))))
 
                 if not self.debug_mode and previous_average_mean > 0 and diff > mean_diff:
                     self.queue.put((END, 'КЛЮЕТ!\n'))
