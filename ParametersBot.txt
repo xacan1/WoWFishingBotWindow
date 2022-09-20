@@ -5,6 +5,6 @@
 #
 iterations:1000
 threshold:0.7
-limit_of_diff:10
+#limit_of_diff:10 - не используется в последней версии бота, так как вычисляется автоматически по средней
 start_button_x:1900
 start_button_y:600
