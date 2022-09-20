@@ -3,3 +3,8 @@
 **/Templates/
 **/config.py
 **/config/
+**/build/
+**/dist/
+**/*.ico
+**/*.bat
+**/*.spec
