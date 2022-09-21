@@ -1,10 +1,10 @@
 /venv/
 **/__pycache__/
 **/Templates/
-**/config.py
-**/config/
+**/Templates for Bot/
 **/build/
 **/dist/
 **/*.ico
+**/*.exe
 **/*.bat
 **/*.spec
