@@ -1,6 +1,7 @@
+from cmath import exp
 from tkinter import *
 from tkinter import messagebox
-from processes import ProcessBot
+from processes import Queue, ProcessBot
 import config
 
 # iterations = 100 количество циклов рыбалки (забросов)
@@ -11,7 +12,7 @@ import config
 
 
 class WindowBot:
-    def __init__(self, master, queue, debug_mode):
+    def __init__(self, master: Tk, queue: Queue, debug_mode: bool):
         self.name_program = 'WoW Fishing Bot'
         self.master = master
         self.queue = queue
@@ -29,17 +30,19 @@ class WindowBot:
                               command=self.showInfoAboutBot)
         main_menu.add_cascade(label='Справка', menu=help_menu)
 
-        self.frame_top = Frame(self.master)
-        self.frame_top.pack(side=TOP, fill=X, expand=NO)
+        # Фрейм верхнего уровня для параметров рыбалки
+        self.frame_top_fish = Frame(self.master)
+        self.frame_top_fish.pack(side=TOP, fill=X, expand=NO)
+
         self.frame_label_entry = LabelFrame(
-            self.frame_top, bd=3, text='Параметры:')
+            self.frame_top_fish, bd=3, text='Параметры для рыбалки:')
         self.frame_label_entry.pack(side=LEFT, fill=X, expand=NO)
         self.frame_label = Frame(self.frame_label_entry)
         self.frame_label.pack(side=LEFT, expand=NO)
         self.frame_entry = Label(self.frame_label_entry)
         self.frame_entry.pack(side=LEFT, expand=NO)
-        self.frame_button = Frame(self.frame_top)
-        self.frame_button.pack(side=LEFT, expand=NO)
+        self.frame_button_fish = Frame(self.frame_top_fish)
+        self.frame_button_fish.pack(side=LEFT, expand=NO)
         self.frame_info = LabelFrame(
             self.master, bd=3, text='Текущее состояние')
         self.frame_info.pack(side=BOTTOM, fill=BOTH, expand=YES)
@@ -75,12 +78,34 @@ class WindowBot:
             self.frame_entry, bd=2, textvariable=self.start_button_y)
         self.entry_start_button_y.pack(side=TOP)
 
-        self.start_button = Button(
-            self.frame_button, bd=2, text='Start', font='arial 16', command=self.start)
-        self.start_button.pack(side=TOP, pady=10)
-        self.stop_button = Button(
-            self.frame_button, bd=2, text='Stop', font='arial 16', command=self.stop)
-        self.stop_button.pack(side=TOP)
+        self.start_button_fish = Button(
+            self.frame_button_fish, bd=2, text='Start fishing', font='arial 16', command=self.start_fishing)
+        self.start_button_fish.pack(side=TOP, pady=10)
+        self.stop_button_fish = Button(
+            self.frame_button_fish, bd=2, text='Stop fishing', font='arial 16', command=self.stop_fishing)
+        self.stop_button_fish.pack(side=TOP)
+
+        # фрейм верхнего уровня для сбития каста
+        self.frame_top_kickcast = Frame(self.master)
+        self.frame_top_kickcast.pack(side=TOP, fill=X, expand=NO)
+
+        self.frame_label_kickcast = LabelFrame(
+            self.frame_top_kickcast, bd=3, text='Авто сбитие каста')
+        self.frame_label_kickcast.pack(side=LEFT, fill=BOTH, expand=NO)
+
+        self.kickcast_info = Label(
+            self.frame_label_kickcast, text=f'Сбитие каста сканирует вражеские способности с частотой {config.FREQUENCY_KICKCAST}сек.\n Также следует учитывать пинг до сервера')
+        self.kickcast_info.pack(side=LEFT, fill=BOTH, expand=NO)
+
+        self.frame_button_kickcast = Frame(self.frame_top_kickcast)
+        self.frame_button_kickcast.pack(side=LEFT, expand=NO)
+
+        self.start_button_kickcast = Button(
+            self.frame_button_kickcast, bd=2, text='Start autokick', font='arial 16', command=self.start_kickcast)
+        self.start_button_kickcast.pack(side=TOP, pady=10)
+        self.stop_button_kickcast = Button(
+            self.frame_button_kickcast, bd=2, text='Stop autokick', font='arial 16', command=self.stop_kickcast)
+        self.stop_button_kickcast.pack(side=TOP)
 
         self.text_info = Text(self.frame_info, wrap=WORD)
         self.text_info.pack(side=TOP, fill=BOTH, expand=YES)
@@ -111,10 +136,28 @@ class WindowBot:
                             'Скоро напишу короткую справку по работе бота, хотя и так все понятно =)')
 
     def getAreaForScreenshot(self) -> dict:
+        screen_area = {}
         screen_width = self.master.winfo_screenwidth()
         screen_height = self.master.winfo_screenheight()
-        screen_area = {'x1': 0, 'y1': 0, 'x2': int(screen_width * 0.8),
-                       'y2': int(screen_height * 0.5)}  # область для поиска поплавка
+        screen_area['screen_area_fish'] = {
+            'x1': int(screen_width * 0.1),
+            'y1': 0,
+            'x2': int(screen_width * 0.8),
+            'y2': int(screen_height * 0.5)
+        }  # область для поиска поплавка
+        screen_area['screen_area_target'] = {
+            'x1': int(screen_width * 0.1),
+            'y1': 0,
+            'x2': int(screen_width * 0.3),
+            'y2': int(screen_height * 0.2)
+        }  # область для поиска каста цели
+        screen_area['screen_area_focus'] = {
+            'x1': int(screen_width * 0.1),
+            'y1': int(screen_height * 0.2),
+            'x2': int(screen_width * 0.3),
+            'y2': int(screen_height * 0.4)
+        }  # область для поиска каста фокуса
+
         return screen_area
 
     def getParameters(self) -> dict:
@@ -168,23 +211,51 @@ class WindowBot:
             msg = self.queue.get()
             self.text_info.insert(msg[0], msg[1])
             self.text_info.see(END)
+
         self.master.after(500, self.getInfoFromBot)
 
-    def start(self) -> None:
+    def start_fishing(self) -> None:
         self.parameters = self.getParametersFromWindow()
+
         if not self.parameters:
             return
+
         self.text_info.delete('0.0', END)
-        self.start_button.configure(state=DISABLED)
+        self.start_button_fish.configure(state=DISABLED)
         self.process_bot = ProcessBot(
             self.queue,
             self.parameters,
+            config.ACTION_FISH,
             self.debug_mode
         )
         self.process_bot.start()
         self.getInfoFromBot()
 
-    def stop(self) -> None:
+    def stop_fishing(self) -> None:
+        if self.process_bot:
+            self.text_info.insert(END, 'Рыбалка остановлена!\n')
+            self.process_bot.terminate()
+            self.process_bot.join()
+            self.process_bot.close()
+            self.process_bot = None
+        else:
+            self.text_info.insert(END, 'Рыбалка остановлена!\n')
+
+        self.start_button_fish.configure(state=NORMAL)
+
+    def start_kickcast(self) -> None:
+        self.text_info.delete('0.0', END)
+        self.start_button_kickcast.configure(state=DISABLED)
+        self.process_bot = ProcessBot(
+            self.queue,
+            self.parameters,
+            config.ACTION_KICKCAST,
+            self.debug_mode
+        )
+        self.process_bot.start()
+        self.getInfoFromBot()
+
+    def stop_kickcast(self) -> None:
         if self.process_bot:
             self.text_info.insert(END, 'Бот остановлен!\n')
             self.process_bot.terminate()
@@ -193,11 +264,13 @@ class WindowBot:
             self.process_bot = None
         else:
             self.text_info.insert(END, 'Бот остановлен!\n')
-        self.start_button.configure(state=NORMAL)
+
+        self.start_button_kickcast.configure(state=NORMAL)
 
     def exit(self) -> None:
         if self.process_bot:
             self.process_bot.terminate()
             self.process_bot.join()
             self.process_bot.close()
+
         self.master.destroy()
