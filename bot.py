@@ -121,19 +121,16 @@ class Bot:
     def start_kickcast(self) -> None:
         current_time = time.strftime("%d.%m.%Y %H:%M:%S", time.localtime())
         self.queue.put((END, f'Начали процесс автокика: {current_time}\n'))
-        templates = self.getTemplates(config.TEMPLATES_KICKCAST)
-        screen_area_target = self.parameters['screen_area']['screen_area_target']
-        screen_area_focus = self.parameters['screen_area']['screen_area_focus']
 
         while True:
             time.sleep(config.FREQUENCY_KICKCAST)
-            result_target = self.findTemplates(templates, screen_area_target)
+            pixel_white = pyautogui.pixelMatchesColor(0, 0, (0, 0, 0)) #  белый
 
-            if any(result_target):
+            if pixel_white:
                 pyautogui.hotkey('shift', 'c')
                 continue
 
-            result_focus = self.findTemplates(templates, screen_area_focus)
+            pixel_black = pyautogui.pixelMatchesColor(0, 0, (255, 255, 255)) #  черный
 
-            if any(result_focus):
+            if pixel_black:
                 pyautogui.press('c')
