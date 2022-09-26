@@ -118,19 +118,24 @@ class Bot:
 
                 previous_average_mean = mean
 
+    # дает КС в каст по таргету если пиксель черный или по фокусу если пиксель белый
     def start_kickcast(self) -> None:
         current_time = time.strftime("%d.%m.%Y %H:%M:%S", time.localtime())
         self.queue.put((END, f'Начали процесс автокика: {current_time}\n'))
+        button_pressed = False
 
         while True:
             time.sleep(config.FREQUENCY_KICKCAST)
-            pixel_white = pyautogui.pixelMatchesColor(0, 0, (0, 0, 0)) #  белый
+            pixel_white = pyautogui.pixelMatchesColor(0, 0, (0, 0, 0))
+            pixel_black = pyautogui.pixelMatchesColor(0, 0, (255, 255, 255))
 
             if pixel_white:
                 pyautogui.hotkey('shift', 'c')
-                continue
-
-            pixel_black = pyautogui.pixelMatchesColor(0, 0, (255, 255, 255)) #  черный
-
-            if pixel_black:
+                button_pressed = True
+            elif pixel_black:
                 pyautogui.press('c')
+                button_pressed = True
+            elif button_pressed:
+                # тут нажать кнопку отмены заклинания (или пета в пассив режим)
+                pyautogui.hotkey('ctrl', '0')
+                button_pressed = False
