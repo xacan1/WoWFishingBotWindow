@@ -29,6 +29,7 @@ class Bot:
             file_name_str = str(file_name)
             img_template = cv2.imread(file_name_str, cv2.IMREAD_GRAYSCALE)
             templates[file_name_str] = (img_template, img_template.shape[::-1])
+
         return templates
 
     def findTemplates(self, templates: dict, screen_area: dict) -> tuple[int, int, int, int]:
@@ -73,7 +74,7 @@ class Bot:
         templates = self.getTemplates(config.TEMPLATES_FISH)
 
         diff_list = []  # Список средних разностей величин от пикселей скриншота
-        mean_diff = 0  # Средняя разность величин для поиска шаблона поплавка на скриншоте
+        # mean_diff = 0  # Средняя разность величин для поиска шаблона поплавка на скриншоте
         time.sleep(2)
 
         for iteration in range(self.parameters['iterations']):
@@ -89,9 +90,10 @@ class Bot:
             pyautogui.click(button='left')
             time.sleep(2)
             screen_area = self.parameters['screen_area']['screen_area_fish']
+            start_index = 0
 
-            for _ in range(18):
-                # примерно 20 секунд = 1 цикл рыбалки
+            for _ in range(40):
+                # примерно 25 секунд = 1 цикл рыбалки
                 time.sleep(config.FREQUENCY_FISH)
                 result = self.findTemplates(templates, screen_area)
 
@@ -105,13 +107,24 @@ class Bot:
                 # тут уже поплавок найден
                 diff = abs(previous_average_mean - mean)
                 diff_list.append(diff)
+                # mean_diff - Средняя разность всех величин diff для поиска шаблона поплавка на скриншоте
                 mean_diff = np.mean(diff_list)
+
+                # определим стартовый индекс для каждого заброса, в этом индексе всегда аномально большое значение, 
+                # его каждый 5-й поиск приравниваем к среднему значению что бы не портил статистику
+                if _ == 0:
+                    start_index = len(diff_list) - 1
+
+                if len(diff_list) % 5:
+                    diff_list[start_index] = mean_diff * 10
+
                 self.queue.put(
                     (END, f'diff: {diff}, mean_diff: {mean_diff}\n'))
 
                 if not self.debug_mode and previous_average_mean > 0 and diff > mean_diff:
                     self.queue.put((END, 'КЛЮЕТ!\n'))
-                    pyautogui.moveTo(width + wt / 2, height + ht / 2)
+                    # pyautogui.moveTo(width + wt / 2, height + ht / 2)
+                    pyautogui.moveTo(width + 200, height + ht / 2)
                     pyautogui.click(button='left')
                     time.sleep(1)
                     break

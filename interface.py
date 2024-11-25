@@ -1,4 +1,3 @@
-from cmath import exp
 from tkinter import *
 from tkinter import messagebox
 from processes import Queue, ProcessBot
@@ -164,14 +163,19 @@ class WindowBot:
         parameters = {}
         fparams = open(config.FILE_PARAMETERS, 'r')
         parameters['screen_area'] = self.getAreaForScreenshot()
+
         for fline in fparams:
             if fline[0] == '#':
                 continue
+
             line = fline.strip().split(':')
+
             if line[0].replace('_', '').isalpha() and line[1].replace('.', '').isdigit():
                 value = float(line[1].strip())
+
                 if value.is_integer():
                     value = int(value)
+
                 parameters[line[0].strip()] = value
             else:
                 messagebox.showerror('Ошибка',
